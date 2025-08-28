@@ -26,5 +26,7 @@ The workflow is:
 git clone https://github.com/michaelseptiadi/rabbitmq-openai.git
 cd rabbitmq-openai
 docker-compose up --build
+```
 
+### 2. Open the project
 Once the containers are running, open in your browser: http://localhost:5000/client.html
