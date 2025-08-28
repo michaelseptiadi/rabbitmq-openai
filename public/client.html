@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>OpenAI Streaming via RabbitMQ + WS</title>
+  <style>
+    body { font-family: ui-sans-serif, system-ui; max-width: 720px; margin: 32px auto; }
+    textarea, input { width: 100%; padding: 8px; margin: 8px 0; }
+    button { padding: 10px 16px; }
+    .mono { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  </style>
+</head>
+<body>
+  <h2>Multi Agent AI Streaming</h2>
+  <label>Prompt</label>
+  <textarea id="prompt" rows="4"></textarea>
+  <button id="send">Send</button>
+
+  <h3>Response</h3>
+  <div id="out" class="mono"></div>
+
+  <script>
+    const out = document.getElementById("out");
+    const ws = new WebSocket("ws://localhost:5001");
+
+    let currentRequestId = null;
+
+    ws.onopen = () => console.log("✅ WS connected");
+    ws.onmessage = (evt) => {
+      const data = JSON.parse(evt.data);
+      // Filter by current requestId
+      if (!currentRequestId || data.requestId !== currentRequestId) return;
+
+      if (data.delta) out.textContent += data.delta;
+      if (data.done) out.textContent += "\n\n[DONE]";
+      if (data.error) out.textContent += `\n\n[ERROR] ${data.error}`;
+    };
+
+    document.getElementById("send").onclick = async () => {
+      out.textContent = "";
+      const prompt = document.getElementById("prompt").value;
+
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt, role: 'user' })
+      });
+      const json = await res.json();
+      currentRequestId = json.requestId;
+      console.log("🧾 requestId:", currentRequestId);
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  app:
+    build: .
+    container_name: rmq-openai-app
+    env_file: .env
+    ports:
+      - "5000:5000"
+      - "5001:5001"
+    depends_on:
+      rabbitmq-broker:
+        condition: service_healthy
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    command: npm run dev
+
+  rabbitmq-broker:
+    image: rabbitmq:3-management
+    container_name: rmq-openai-broker
+    restart: always
+    ports:
+      - "5673:5672"
+      - "15673:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  rabbitmq_data:
